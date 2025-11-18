@@ -53,7 +53,7 @@ resource "aws_security_group" "web" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # Security Issue
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   ingress {
@@ -93,8 +93,8 @@ resource "aws_iam_role_policy" "s3_policy" {
     Version = "2012-10-17"
     Statement = [{
       Effect   = "Allow"
-      Action   = "s3:*" # Security Issue
-      Resource = "*"    # Security Issue
+      Action   = "s3:*"
+      Resource = "*"
     }]
   })
 }
@@ -122,8 +122,8 @@ resource "aws_s3_bucket" "data" {
 resource "aws_s3_bucket_public_access_block" "data" {
   bucket = aws_s3_bucket.data.id
 
-  block_public_acls       = false # Security Issue
-  block_public_policy     = false # Security Issue
+  block_public_acls       = false
+  block_public_policy     = false
   ignore_public_acls      = false
   restrict_public_buckets = false
 }
