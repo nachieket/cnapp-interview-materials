@@ -12,7 +12,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# VPC
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -22,19 +21,16 @@ resource "aws_vpc" "main" {
   }
 }
 
-# Internet Gateway
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 }
 
-# Public Subnet
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
 }
 
-# Route Table
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
 
@@ -49,7 +45,6 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
-# Security Group - Overly Permissive
 resource "aws_security_group" "web" {
   name   = "web-sg"
   vpc_id = aws_vpc.main.id
@@ -76,7 +71,6 @@ resource "aws_security_group" "web" {
   }
 }
 
-# IAM Role with Excessive Permissions
 resource "aws_iam_role" "ec2_role" {
   name = "ec2-role"
 
@@ -109,7 +103,6 @@ resource "aws_iam_instance_profile" "ec2_profile" {
   role = aws_iam_role.ec2_role.name
 }
 
-# EC2 Instance
 resource "aws_instance" "web" {
   ami                    = "ami-0c55b159cbfafe1f0"
   instance_type          = "t3.medium"
@@ -122,7 +115,6 @@ resource "aws_instance" "web" {
   }
 }
 
-# S3 Bucket with Public Access
 resource "aws_s3_bucket" "data" {
   bucket = "prod-data-bucket-12345"
 }
@@ -136,7 +128,6 @@ resource "aws_s3_bucket_public_access_block" "data" {
   restrict_public_buckets = false
 }
 
-# Outputs
 output "instance_public_ip" {
   value = aws_instance.web.public_ip
 }

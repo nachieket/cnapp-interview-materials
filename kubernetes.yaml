@@ -29,17 +29,17 @@ spec:
     spec:
       containers:
       - name: nginx
-        image: nginx:latest                    # Security Issue: using 'latest' tag
+        image: nginx:latest 
         ports:
         - containerPort: 80
         env:
         - name: DB_PASSWORD
-          value: "SuperSecret123!"             # Security Issue: hardcoded secret
+          value: "SuperSecret123!"
         - name: API_KEY
-          value: "sk-1234567890abcdef"         # Security Issue: hardcoded secret
+          value: "sk-1234567890abcdef"
         securityContext:
-          privileged: true                     # Security Issue: privileged container
-          runAsUser: 0                         # Security Issue: running as root
+          privileged: true
+          runAsUser: 0
         resources:
           requests:
             memory: "64Mi"
@@ -49,11 +49,11 @@ spec:
             cpu: "500m"
         volumeMounts:
         - name: host-volume
-          mountPath: /host                     # Security Issue: host path mount
+          mountPath: /host 
       volumes:
       - name: host-volume
         hostPath:
-          path: /                              # Security Issue: mounting root filesystem
+          path: /         
           type: Directory
 
 ---
@@ -66,7 +66,7 @@ metadata:
   labels:
     app: web-app
 spec:
-  type: LoadBalancer                           # Exposes to internet
+  type: LoadBalancer              
   selector:
     app: web-app
   ports:
@@ -93,11 +93,11 @@ spec:
     securityContext:
       capabilities:
         add:
-        - SYS_ADMIN                            # Security Issue: excessive capabilities
+        - SYS_ADMIN                        
         - NET_ADMIN
-      allowPrivilegeEscalation: true           # Security Issue
+      allowPrivilegeEscalation: true       
   serviceAccountName: default
-  automountServiceAccountToken: true           # Security Issue: auto-mounting token
+  automountServiceAccountToken: true        
 
 ---
 # configmap.yaml
@@ -107,7 +107,7 @@ metadata:
   name: app-config
   namespace: production
 data:
-  database_url: "mysql://admin:password@db:3306/prod"  # Security Issue: credentials in ConfigMap
+  database_url: "mysql://admin:password@db:3306/prod" 
   api_endpoint: "https://api.example.com"
 
 ---
@@ -130,5 +130,5 @@ subjects:
   namespace: production
 roleRef:
   kind: ClusterRole
-  name: cluster-admin                          # Security Issue: cluster-admin to app SA
+  name: cluster-admin                        
   apiGroup: rbac.authorization.k8s.io
