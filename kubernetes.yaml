@@ -1,0 +1,134 @@
+# namespace.yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+  labels:
+    environment: production
+
+---
+# deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web-app
+  namespace: production
+  labels:
+    app: web-app
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+        tier: frontend
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest                    # Security Issue: using 'latest' tag
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_PASSWORD
+          value: "SuperSecret123!"             # Security Issue: hardcoded secret
+        - name: API_KEY
+          value: "sk-1234567890abcdef"         # Security Issue: hardcoded secret
+        securityContext:
+          privileged: true                     # Security Issue: privileged container
+          runAsUser: 0                         # Security Issue: running as root
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: host-volume
+          mountPath: /host                     # Security Issue: host path mount
+      volumes:
+      - name: host-volume
+        hostPath:
+          path: /                              # Security Issue: mounting root filesystem
+          type: Directory
+
+---
+# service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-service
+  namespace: production
+  labels:
+    app: web-app
+spec:
+  type: LoadBalancer                           # Exposes to internet
+  selector:
+    app: web-app
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+    nodePort: 30080
+
+---
+# pod.yaml (standalone pod for testing)
+apiVersion: v1
+kind: Pod
+metadata:
+  name: debug-pod
+  namespace: production
+  labels:
+    app: debug
+spec:
+  containers:
+  - name: debug-container
+    image: ubuntu:20.04
+    command: ["/bin/bash"]
+    args: ["-c", "while true; do sleep 30; done"]
+    securityContext:
+      capabilities:
+        add:
+        - SYS_ADMIN                            # Security Issue: excessive capabilities
+        - NET_ADMIN
+      allowPrivilegeEscalation: true           # Security Issue
+  serviceAccountName: default
+  automountServiceAccountToken: true           # Security Issue: auto-mounting token
+
+---
+# configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  database_url: "mysql://admin:password@db:3306/prod"  # Security Issue: credentials in ConfigMap
+  api_endpoint: "https://api.example.com"
+
+---
+# serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: app-service-account
+  namespace: production
+
+---
+# clusterrolebinding.yaml (Overly Permissive)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: app-cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: app-service-account
+  namespace: production
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin                          # Security Issue: cluster-admin to app SA
+  apiGroup: rbac.authorization.k8s.io
